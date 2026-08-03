@@ -522,11 +522,11 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
     </div>
 
     <figure class="frame viewport">
-      <video id="teaser" preload="metadata" playsinline controls
+      <video id="teaser" preload="auto" playsinline muted autoplay loop controls
              aria-label="סרטון הדגמה קצר של MVT AREA">
         <source src="assets/teaser-v2.mp4" type="video/mp4">
       </video>
-      <button class="playbtn" id="playbtn" aria-label="הפעלת סרטון ההדגמה">
+      <button class="playbtn hidden" id="playbtn" aria-label="הפעלת סרטון ההדגמה">
         <span><svg width="22" height="24" viewBox="0 0 22 24" fill="currentColor"
                    aria-hidden="true"><path d="M21 12 0 24V0z"/></svg></span>
       </button>
@@ -954,14 +954,19 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
 const LEADS_ENDPOINT =
   "https://script.google.com/macros/s/AKfycbwB4h0s4ci19OAD1iuBitF2DDAtLY6HnXmQiggrCn4oJmWz_MN2tux--5Iahnf8WuOk/exec";
 
-/* נגן הווידאו */
+/* נגן הווידאו — autoplay חייב להיות מושתק (מדיניות דפדפנים) */
 (function(){
   const v = document.getElementById('teaser');
   const b = document.getElementById('playbtn');
   if(!v || !b) return;
-  b.addEventListener('click', () => { v.play(); b.classList.add('hidden'); });
-  v.addEventListener('play',  () => b.classList.add('hidden'));
-  v.addEventListener('pause', () => { if(!v.ended) b.classList.remove('hidden'); });
+  const hide = () => b.classList.add('hidden');
+  const show = () => { if(!v.ended) b.classList.remove('hidden'); };
+  b.addEventListener('click', () => { v.play().then(hide).catch(() => {}); });
+  v.addEventListener('play', hide);
+  v.addEventListener('pause', show);
+  const tryPlay = () => v.play().then(hide).catch(show);
+  if (v.readyState >= 2) tryPlay();
+  else v.addEventListener('loadeddata', tryPlay, { once: true });
 })();
 
 /* חלון הצהרת הפרטיות */
