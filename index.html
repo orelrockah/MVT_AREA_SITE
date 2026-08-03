@@ -355,6 +355,68 @@ form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
                            border-color:var(--accent)}
 .chips input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
 .hp{position:absolute!important;left:-9999px;opacity:0;height:0;overflow:hidden}
+
+/* ── הסכמות ────────────────────────────────────────────────────────── */
+.consent{gap:12px;margin-top:4px}
+.cb{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;
+    font-weight:400;line-height:1.6;color:var(--muted);cursor:pointer}
+.cb input{
+  appearance:none;-webkit-appearance:none;flex:none;
+  width:19px;height:19px;margin-top:3px;border-radius:4px;cursor:pointer;
+  border:1px solid var(--line);background:var(--ground);
+  display:grid;place-items:center;transition:background .12s,border-color .12s;
+}
+.cb input:checked{background:var(--accent);border-color:var(--accent)}
+.cb input:checked::after{
+  content:"";width:10px;height:6px;margin-top:-2px;
+  border:2px solid var(--accent-ink);border-top:0;border-inline-end:0;
+  transform:rotate(-45deg);
+}
+.cb input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cb input.invalid{border-color:var(--accent);box-shadow:0 0 0 3px rgba(229,57,155,.18)}
+.linkbtn{
+  font:inherit;color:var(--accent);background:none;border:0;padding:0;
+  cursor:pointer;text-decoration:underline;text-underline-offset:3px;
+}
+.linkbtn:hover{color:var(--text)}
+
+/* ── חלון הצהרת הפרטיות ────────────────────────────────────────────── */
+dialog#privacy-modal{
+  border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  color:var(--text);padding:0;width:min(720px,92vw);max-height:86vh;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);
+}
+dialog#privacy-modal::backdrop{background:rgba(4,7,12,.76);backdrop-filter:blur(3px)}
+.pm-head{
+  position:sticky;top:0;background:var(--surface);z-index:1;
+  border-bottom:1px solid var(--line);padding:20px 26px;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+}
+.pm-head h2{font-size:22px;font-weight:900}
+.pm-head .sub{color:var(--muted);font-size:13.5px;margin-top:3px}
+.pm-close{
+  background:none;border:1px solid var(--line);border-radius:var(--r);
+  color:var(--muted);cursor:pointer;font-size:20px;line-height:1;
+  padding:5px 11px;flex:none;
+}
+.pm-close:hover{color:var(--text);border-color:var(--muted)}
+.pm-body{padding:22px 26px 28px;overflow-y:auto;font-size:15.5px;line-height:1.8}
+.pm-body h3{
+  font-size:15px;font-weight:800;margin:24px 0 6px;color:var(--text);
+  display:flex;align-items:center;gap:9px;
+}
+.pm-body h3:first-child{margin-top:0}
+.pm-body h3::before{
+  content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);flex:none;
+}
+.pm-body p,.pm-body ul{color:var(--muted)}
+.pm-body ul{margin:6px 0 0;padding-inline-start:20px}
+.pm-body li{margin-bottom:5px}
+.pm-body a{color:var(--accent)}
+.pm-foot{
+  border-top:1px solid var(--line-soft);margin-top:26px;padding-top:16px;
+  font-size:13px;color:var(--muted);
+}
 .submit-row{grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .form-note{font-size:13.5px;color:var(--muted)}
 .form-msg{grid-column:1/-1;font-size:15px;padding:12px 14px;border-radius:var(--r);display:none}
@@ -720,7 +782,6 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
           <input type="checkbox" id="in1" name="interest" value="הדגמה" checked><label for="in1">הדגמה</label>
           <input type="checkbox" id="in2" name="interest" value="הצטרפות לפיילוט"><label for="in2">הצטרפות לפיילוט</label>
           <input type="checkbox" id="in3" name="interest" value="מחיר ותנאים"><label for="in3">מחיר ותנאים</label>
-          <input type="checkbox" id="in4" name="interest" value="עדכון בהשקה"><label for="in4">עדכון בהשקה</label>
         </div>
       </div>
 
@@ -734,9 +795,27 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
         <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off">
       </div>
 
+      <!-- הסכמות. שתיהן נפרדות בכוונה: האישור העליון הוא יידוע לפי סעיף 11
+           לחוק הגנת הפרטיות, והתחתון הוא הסכמה לדיוור לפי סעיף 30א לחוק
+           התקשורת. החוק אוסר לאחד ביניהן, ואסור שתיבת הדיוור תהיה מסומנת
+           מראש. -->
+      <div class="field wide consent">
+        <label class="cb">
+          <input type="checkbox" id="f-privacy" name="privacy">
+          <span>קראתי את <button type="button" class="linkbtn" id="open-privacy">הצהרת
+            הפרטיות</button> ומאשר/ת את מסירת הפרטים ואת השימוש בהם כמפורט
+            בה <span class="req">*</span></span>
+        </label>
+        <label class="cb">
+          <input type="checkbox" id="f-marketing" name="marketing">
+          <span>אשמח לקבל עדכונים על MVT AREA במייל או בוואטסאפ. אפשר להסיר
+            בכל רגע</span>
+        </label>
+      </div>
+
       <div class="submit-row">
         <button class="btn btn-primary" type="submit" id="submit-btn">שליחת פרטים</button>
-        <span class="form-note">הפרטים מגיעים אלינו בלבד. לא נשלח דיוור.</span>
+        <span class="form-note">הפרטים מגיעים אלינו בלבד ואינם נמכרים לאיש.</span>
       </div>
       <div class="form-msg" id="form-msg" role="status" aria-live="polite"></div>
     </form>
@@ -764,6 +843,8 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
     </div>
   </div>
   <div class="colophon">
+    <button type="button" class="linkbtn" id="open-privacy-footer">הצהרת פרטיות</button>
+    <br><br>
     MVT AREA הוא מוצר של MAXIOM. השמות Revit ו-Autodesk הם סימנים מסחריים של
     Autodesk, Inc. אין בין MAXIOM ובין Autodesk או מנהל התכנון קשר רשמי.
   </div>
@@ -778,6 +859,132 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
   <span class="wa-text">וואטסאפ</span>
 </a>
 
+<!-- ═══ הצהרת פרטיות ═══
+     מבנה הסעיפים עוקב אחר שש דרישות היידוע של סעיף 11 לחוק הגנת הפרטיות
+     כנוסחו לאחר תיקון 13: חובה או רצון חופשי, מטרת האיסוף, למי מועבר,
+     תוצאות סירוב, זהות בעל המאגר ופרטי קשר, וזכויות עיון ותיקון. -->
+<dialog id="privacy-modal" aria-labelledby="pm-title">
+  <div class="pm-head">
+    <div>
+      <h2 id="pm-title">הצהרת פרטיות</h2>
+      <div class="sub">עודכנה ב-3 באוגוסט 2026</div>
+    </div>
+    <button type="button" class="pm-close" id="pm-close" aria-label="סגירה">&times;</button>
+  </div>
+
+  <div class="pm-body">
+    <p>
+      המסמך הזה מסביר איזה מידע אנחנו אוספים בטופס שבאתר, למה, מה נעשה בו
+      ומה הזכויות שלכם לגביו. הוא נכתב בהתאם לחובת היידוע שבסעיף 11 לחוק
+      הגנת הפרטיות, התשמ"א-1981, כנוסחו לאחר תיקון 13.
+    </p>
+
+    <h3>מי אוסף את המידע</h3>
+    <p>
+      MAXIOM, המפעילה את המוצר MVT AREA, היא בעלת המאגר והמחזיקה בו.<br>
+      איש הקשר לענייני פרטיות: אוראל רוקח.<br>
+      דואר אלקטרוני: <a href="mailto:orelrockah@outlook.co.il" class="ltr">orelrockah@outlook.co.il</a><br>
+      טלפון: <a href="tel:0507203778">050-7203778</a>
+    </p>
+
+    <h3>האם חובה למסור את הפרטים</h3>
+    <p>
+      לא. אין שום חובה חוקית למסור את הפרטים, והמסירה נעשית מרצונכם החופשי
+      ובהסכמתכם בלבד.
+    </p>
+
+    <h3>מה קורה אם תבחרו לא למסור</h3>
+    <p>
+      פשוט לא נוכל לחזור אליכם, כי לא תהיה לנו דרך ליצור קשר. לא תיפגע שום
+      זכות אחרת שלכם, ותמיד אפשר לפנות אלינו ישירות בטלפון או בוואטסאפ בלי
+      להשאיר פרטים בטופס.
+    </p>
+
+    <h3>לשם מה נאסף המידע</h3>
+    <p>המידע משמש למטרות האלה בלבד:</p>
+    <ul>
+      <li>יצירת קשר חוזר בעקבות פנייתכם</li>
+      <li>תיאום הדגמה של המוצר ומענה על שאלות</li>
+      <li>ניהול הקשר העסקי מולכם בכל הנוגע ל-MVT AREA</li>
+      <li>משלוח עדכונים על המוצר, ורק אם סימנתם על כך במפורש בטופס</li>
+    </ul>
+
+    <h3>למי מועבר המידע</h3>
+    <p>
+      איננו מוכרים, משכירים או מעבירים את פרטיכם לצד שלישי כלשהו לצורכי
+      שיווק. לצורך ההפעלה הטכנית של האתר המידע עובר דרך שני נותני שירות:
+    </p>
+    <ul>
+      <li>
+        <b>Google</b>. הפרטים שאתם ממלאים נשמרים בגיליון Google Sheets,
+        וההתראה עליהם נשלחת בדואר אלקטרוני דרך Google Apps Script. שרתי
+        החברה נמצאים גם מחוץ לישראל.
+      </li>
+      <li>
+        <b>Cloudflare</b>. מארחת את האתר ומעבירה אליו את התעבורה. במסגרת
+        זו היא מעבדת נתונים טכניים כמו כתובת IP, לצורכי אבטחה ותפעול.
+      </li>
+    </ul>
+    <p>
+      אם תבחרו לפנות אלינו בוואטסאפ, השיחה מתנהלת בפלטפורמה של Meta וכפופה
+      למדיניות הפרטיות שלה.
+    </p>
+
+    <h3>כמה זמן נשמר המידע</h3>
+    <p>
+      עד שנתיים מהפנייה האחרונה שלכם, או עד שתבקשו למחוק אותו, לפי המוקדם.
+      אם תיווצר בינינו התקשרות עסקית, המידע הנוגע לה יישמר לפי תקופות
+      השמירה שהדין מחייב לגבי תיעוד עסקי.
+    </p>
+
+    <h3>הזכויות שלכם</h3>
+    <p>
+      לפי חוק הגנת הפרטיות אתם רשאים <b>לעיין</b> במידע שנשמר עליכם,
+      <b>לבקש לתקן</b> אותו אם הוא אינו נכון, שלם, ברור או מעודכן,
+      ו<b>לבקש למחוק</b> אותו.
+    </p>
+    <p>
+      כדי לממש כל אחת מהזכויות האלה כתבו לנו לכתובת
+      <a href="mailto:orelrockah@outlook.co.il" class="ltr">orelrockah@outlook.co.il</a>.
+      נטפל בפנייה בתוך 30 יום. אם תסורב בקשתכם תקבלו נימוק בכתב, ותוכלו
+      להשיג על כך בפני בית משפט השלום.
+    </p>
+
+    <h3>דיוור פרסומי</h3>
+    <p>
+      לא נשלח אליכם תוכן שיווקי אלא אם סימנתם על כך בתיבה הייעודית בטופס.
+      זו הסכמה נפרדת, לפי סעיף 30א לחוק התקשורת, והיא אינה חלק מאישור
+      ההצהרה הזאת. גם אם סימנתם, אפשר להסיר את עצמכם בכל רגע במענה להודעה
+      או במייל אלינו, ונפעל לכך מיד.
+    </p>
+
+    <h3>אבטחת המידע</h3>
+    <p>
+      התעבורה באתר מוצפנת. הגישה לגיליון שבו נשמרים הפרטים מוגבלת לבעלי
+      תפקיד בלבד ומוגנת בסיסמה ובאימות דו שלבי.
+    </p>
+
+    <h3>עוגיות ומעקב</h3>
+    <p>
+      האתר אינו מציב עוגיות מעקב, אינו מפעיל כלי פרסום או ניתוח התנהגות,
+      ואינו מבצע לגביכם פרופיילינג או קבלת החלטות אוטומטית. ייתכן שרשת
+      האחסון של Cloudflare תציב עוגייה טכנית הנדרשת לאבטחה ולזיהוי תעבורה
+      אוטומטית.
+    </p>
+
+    <h3>שינויים בהצהרה</h3>
+    <p>
+      אם נעדכן את ההצהרה, התאריך שבראש המסמך ישתנה בהתאם. הנוסח המחייב הוא
+      זה המופיע כאן במועד מסירת הפרטים.
+    </p>
+
+    <div class="pm-foot">
+      MAXIOM · הצהרה זו נוגעת לטופס יצירת הקשר באתר mvt.maxiom.co.il ואינה
+      חלה על השימוש בתוסף MVT AREA עצמו.
+    </div>
+  </div>
+</dialog>
+
 <script>
 /* כתובת ה-Web App של Apps Script, גיליון הלידים */
 const LEADS_ENDPOINT =
@@ -791,6 +998,18 @@ const LEADS_ENDPOINT =
   b.addEventListener('click', () => { v.play(); b.classList.add('hidden'); });
   v.addEventListener('play',  () => b.classList.add('hidden'));
   v.addEventListener('pause', () => { if(!v.ended) b.classList.remove('hidden'); });
+})();
+
+/* חלון הצהרת הפרטיות */
+(function(){
+  const modal = document.getElementById('privacy-modal');
+  if(!modal) return;
+  const open = e => { e.preventDefault(); modal.showModal(); };
+  document.getElementById('open-privacy')?.addEventListener('click', open);
+  document.getElementById('open-privacy-footer')?.addEventListener('click', open);
+  document.getElementById('pm-close')?.addEventListener('click', () => modal.close());
+  /* לחיצה על הרקע סוגרת */
+  modal.addEventListener('click', e => { if(e.target === modal) modal.close(); });
 })();
 
 /* טופס הלידים */
@@ -823,6 +1042,14 @@ const LEADS_ENDPOINT =
       form.phone.focus(); return;
     }
 
+    const privacy = document.getElementById('f-privacy');
+    if(!privacy.checked){
+      show('כדי שנוכל לשמור את הפרטים ולחזור אליכם, צריך לאשר את הצהרת הפרטיות.', 'err');
+      privacy.classList.add('invalid');
+      privacy.focus(); return;
+    }
+    privacy.classList.remove('invalid');
+
     const payload = {
       name, phone,
       email:   form.email.value.trim(),
@@ -832,7 +1059,12 @@ const LEADS_ENDPOINT =
       interest:      checked('#chips-interest'),
       notes:   form.notes.value.trim(),
       website: form.website.value,
-      source:  'mvt.maxiom.co.il'
+      source:  'mvt.maxiom.co.il',
+      /* תיעוד ההסכמות. חוק הספאם דורש שההסכמה לדיוור תהיה מתועדת ונשמרת. */
+      consentPrivacy:   true,
+      consentMarketing: document.getElementById('f-marketing').checked,
+      consentAt:        new Date().toISOString(),
+      privacyVersion:   '2026-08-03'
     };
 
     btn.disabled = true;
