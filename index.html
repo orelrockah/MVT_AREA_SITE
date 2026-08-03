@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MVT AREA | הגשת שטחים לרישוי זמין מתוך Revit</title>
+<meta name="description" content="תוסף Revit שמחשב שטחים ומפיק את חבילת ההגשה לרובוט של מנהל התכנון: DXF, DWFX ו-DAT. כולל בדיקה שמדמה את תוצר הרובוט לפני שמעלים. תומך ב-Revit 2019 עד 2027.">
+<meta name="theme-color" content="#090d16">
+<meta property="og:title" content="MVT AREA | הגשת שטחים לרישוי זמין מתוך Revit">
+<meta property="og:description" content="מסמנים שטחים, מזינים קוד שימוש, והתוסף מפיק את חבילת ההגשה המלאה. בדיקה עצמית לפני ההעלאה לפורטל.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<link rel="stylesheet" href="assets/fonts.css">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   MAXIOM · דף המוצר של MVT AREA
+   ───────────────────────────────────────────────────────────────────────
+   עולם חזותי אחד, כהה בלבד. הפלטה נלקחה מחמשת אייקוני הלוגו: כחול,
+   סגול, כתום, ירוק וטורקיז, על רקע נייבי כמעט שחור. הזוהר המג'נטה הוא
+   גם הצבע של קו גבול Area ברוויט.
+   כל שלב בסדר העבודה נושא את אחד מחמשת צבעי הלוגו.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  --ground:#090d16;
+  --surface:#111a2b;
+  --surface-2:#18223a;
+  --line:#243050;
+  --line-soft:#182238;
+
+  --text:#e9edf6;
+  --muted:#8a96ad;
+
+  --accent:#e5399b;
+  --accent-ink:#14030c;
+
+  --c-blue:#3b82f6;
+  --c-violet:#8b5cf6;
+  --c-amber:#f5a524;
+  --c-green:#2bc55e;
+  --c-teal:#16c4ac;
+
+  --f-display:"Heebo","Segoe UI",system-ui,sans-serif;
+  --f-body:"Assistant","Segoe UI",system-ui,sans-serif;
+  --f-data:ui-monospace,"Consolas","SFMono-Regular",monospace;
+
+  --page:min(1180px,92vw);
+  --gutter:clamp(18px,4vw,64px);
+  --r:4px;
+
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--ground); color:var(--text);
+  font-family:var(--f-body); font-size:17px; line-height:1.75;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+img,video{max-width:100%;display:block}
+a{color:inherit}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.18}
+p{margin:0}
+::selection{background:var(--accent);color:#fff}
+
+/* ערכים באנגלית בלבד: נעילת כיוון כדי שהסדר לא יתהפך בהקשר RTL */
+.ltr{direction:ltr;unicode-bidi:isolate}
+
+/* זוהר סביבתי מאחורי ראש הדף */
+.glow{
+  position:absolute; inset-block-start:-260px; inset-inline-start:50%;
+  transform:translateX(50%);
+  width:min(1100px,120vw); height:720px; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(46% 42% at 50% 62%, rgba(229,57,155,.20), transparent 70%),
+    radial-gradient(38% 34% at 26% 46%, rgba(59,130,246,.15), transparent 70%),
+    radial-gradient(34% 32% at 74% 44%, rgba(139,92,246,.14), transparent 70%);
+  filter:blur(14px);
+}
+
+/* ── מסגרת הגיליון ─────────────────────────────────────────────────── */
+.sheet{
+  width:var(--page); margin-inline:auto; position:relative; z-index:1;
+  border-inline:1px solid var(--line-soft);
+  padding-inline:var(--gutter);
+}
+.sheet::before,.sheet::after{
+  content:""; position:absolute; top:0; bottom:0; width:7px;
+  background-image:repeating-linear-gradient(
+      to bottom, var(--line-soft) 0 1px, transparent 1px 46px);
+  pointer-events:none;
+}
+.sheet::before{inset-inline-start:0}
+.sheet::after{inset-inline-end:0}
+
+.label{
+  font-family:var(--f-data); font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+.rule{
+  display:flex; align-items:center; gap:14px;
+  margin-block:clamp(56px,8vw,104px) clamp(26px,4vw,40px);
+}
+.rule::after{content:"";flex:1;height:1px;background:var(--line)}
+.rule .label{white-space:nowrap}
+.rule .n{color:var(--accent);font-weight:700}
+
+/* ── כותרת עליונה ──────────────────────────────────────────────────── */
+header{
+  border-bottom:1px solid var(--line-soft); position:sticky; top:0; z-index:40;
+  background:rgba(9,13,22,.82); backdrop-filter:blur(12px);
+}
+.topbar{
+  width:var(--page); margin-inline:auto; padding:13px var(--gutter);
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+}
+
+/* הלוגו נבנה ב-CSS ולא כתמונה: חד בכל גודל, בלי בקשת רשת נוספת.
+   חמשת הצבעים כאן הם אותם צבעים שנושאים את שלבי סדר העבודה. */
+.wordmark{display:inline-flex;align-items:center;gap:13px;text-decoration:none}
+.logo{display:inline-flex;gap:5px;flex:none}
+.logo i{
+  width:26px;height:26px;border-radius:7px;background:var(--c);
+  display:grid;place-items:center;font-style:normal;
+  font-family:var(--f-display);font-weight:900;font-size:14px;
+  color:#08111f;line-height:1;
+}
+.logo i svg{display:block}
+.wm-text{display:flex;flex-direction:column;line-height:1.05}
+.wm-text b{font-family:var(--f-display);font-weight:900;font-size:18px;letter-spacing:.13em}
+.wm-text em{font-style:normal;font-family:var(--f-data);font-size:9.5px;
+            letter-spacing:.26em;color:var(--muted);margin-top:3px}
+@media(max-width:420px){
+  .logo i{width:22px;height:22px;border-radius:6px;font-size:12px}
+  .wm-text b{font-size:16px}
+}
+
+.topbar nav{display:flex;align-items:center;gap:22px}
+.topbar nav a{
+  font-size:14.5px;text-decoration:none;color:var(--muted);
+  padding-block:4px;border-bottom:1px solid transparent;
+}
+.topbar nav a:hover{color:var(--text);border-bottom-color:var(--accent)}
+@media(max-width:760px){.topbar nav a:not(.btn-mini){display:none}}
+.btn-mini{
+  font-family:var(--f-display);font-weight:800;font-size:14px;
+  background:var(--accent);color:var(--accent-ink);text-decoration:none;
+  padding:8px 16px;border-radius:var(--r);border-bottom:0!important;
+}
+.btn-mini:hover{filter:brightness(1.1)}
+
+/* ── ראש הדף ───────────────────────────────────────────────────────── */
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(28px,5vw,64px);
+      align-items:center;padding-block:clamp(44px,7vw,86px)}
+@media(max-width:900px){.hero{grid-template-columns:1fr;gap:34px}}
+
+.eyebrow{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+.eyebrow .dot{
+  width:7px;height:7px;background:var(--accent);border-radius:50%;flex:none;
+  box-shadow:0 0 0 4px rgba(229,57,155,.18);
+}
+
+h1{font-size:clamp(34px,5.4vw,60px);font-weight:900;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{margin-top:22px;font-size:clamp(17px,2vw,20px);color:var(--muted);max-width:38ch}
+.lede b{color:var(--text);font-weight:600}
+
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.btn{
+  font-family:var(--f-display);font-weight:800;font-size:16px;
+  text-decoration:none;padding:14px 26px;border-radius:var(--r);
+  display:inline-flex;align-items:center;gap:9px;border:1px solid transparent;
+  cursor:pointer;
+  transition:transform .12s ease,background .15s ease,color .15s ease,border-color .15s ease;
+}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--accent);color:var(--accent-ink);
+             box-shadow:0 6px 26px rgba(229,57,155,.26)}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-ghost{border-color:var(--line);color:var(--text);background:var(--surface)}
+.btn-ghost:hover{border-color:var(--muted)}
+
+.dimension{
+  margin-top:34px;display:flex;align-items:center;gap:10px;
+  color:var(--muted);font-family:var(--f-data);font-size:11.5px;letter-spacing:.1em;
+}
+.dimension .bar{flex:1;height:7px;position:relative;border-inline:1px solid var(--line)}
+.dimension .bar::before{
+  content:"";position:absolute;inset-block-start:3px;inset-inline:0;
+  height:1px;background:var(--line);
+}
+
+/* ── מסגרות מדיה ───────────────────────────────────────────────────── */
+.frame{
+  margin:0; border:1px solid var(--line); border-radius:var(--r);
+  overflow:hidden; background:var(--surface);
+}
+.frame img,.frame video{width:100%}
+.frame figcaption{
+  border-top:1px solid var(--line-soft); padding:9px 14px;
+  background:var(--surface-2); display:flex; justify-content:space-between;
+  gap:12px; align-items:center;
+}
+.viewport{position:relative}
+.viewport video{aspect-ratio:1080/1350;object-fit:cover;background:#000}
+.playbtn{position:absolute;inset:0;display:grid;place-items:center;border:0;
+         background:transparent;cursor:pointer;color:#fff}
+.playbtn span{
+  width:66px;height:66px;border-radius:50%;background:rgba(9,13,22,.6);
+  backdrop-filter:blur(3px);border:1.5px solid rgba(255,255,255,.7);
+  display:grid;place-items:center;transition:transform .15s ease,background .15s ease;
+}
+.playbtn:hover span{transform:scale(1.07);background:var(--accent);border-color:var(--accent)}
+.playbtn svg{margin-inline-start:4px}
+.playbtn.hidden{display:none}
+
+/* ── רצועת נתונים ──────────────────────────────────────────────────── */
+.specs{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border:1px solid var(--line);border-radius:var(--r);background:var(--surface);
+}
+@media(max-width:820px){.specs{grid-template-columns:repeat(2,1fr)}}
+.spec{padding:20px 22px;border-inline-start:1px solid var(--line-soft)}
+.spec:first-child{border-inline-start:0}
+@media(max-width:820px){
+  .spec:nth-child(odd){border-inline-start:0}
+  .spec:nth-child(n+3){border-top:1px solid var(--line-soft)}
+}
+.spec .v{font-family:var(--f-display);font-weight:800;font-size:22px;
+         font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.spec .k{font-size:14px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── הבעיה ─────────────────────────────────────────────────────────── */
+.problem{
+  border:1px solid var(--line);border-inline-start:3px solid var(--accent);
+  border-radius:var(--r);background:var(--surface);
+  padding:clamp(26px,4vw,42px);display:grid;
+  grid-template-columns:auto 1fr;gap:clamp(22px,4vw,46px);align-items:center;
+}
+@media(max-width:760px){.problem{grid-template-columns:1fr}}
+.problem .shout{
+  font-family:var(--f-display);font-weight:900;
+  font-size:clamp(26px,3.6vw,40px);line-height:1.25;white-space:nowrap;
+}
+.problem .shout s{text-decoration-color:var(--accent);text-decoration-thickness:3px}
+.problem p{color:var(--muted);max-width:54ch}
+
+/* ── שלבי העבודה ───────────────────────────────────────────────────── */
+.steps{display:flex;flex-direction:column;gap:clamp(30px,5vw,58px)}
+.step{display:grid;grid-template-columns:1fr 1.25fr;
+      gap:clamp(22px,4vw,52px);align-items:center}
+.step:nth-child(even){direction:ltr}
+.step:nth-child(even)>*{direction:rtl}
+@media(max-width:860px){
+  .step,.step:nth-child(even){grid-template-columns:1fr;direction:rtl;gap:20px}
+}
+.step-num{
+  display:inline-flex;align-items:center;gap:9px;margin-bottom:12px;
+  font-family:var(--f-data);font-size:12px;letter-spacing:.14em;color:var(--muted);
+}
+.step-num i{
+  width:22px;height:22px;border-radius:5px;flex:none;display:grid;
+  place-items:center;font-style:normal;font-weight:800;font-size:12px;
+  color:#07101f;font-family:var(--f-display);
+}
+.step:nth-child(1) .step-num i{background:var(--c-blue)}
+.step:nth-child(2) .step-num i{background:var(--c-violet)}
+.step:nth-child(3) .step-num i{background:var(--c-amber)}
+.step:nth-child(4) .step-num i{background:var(--c-green)}
+.step:nth-child(5) .step-num i{background:var(--c-teal)}
+.step h3{font-size:clamp(21px,2.5vw,27px);font-weight:800}
+.step p{color:var(--muted);margin-top:11px;max-width:46ch}
+
+/* ── בדיקה לפני העלאה ──────────────────────────────────────────────── */
+.verify{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(24px,4vw,52px);align-items:start}
+@media(max-width:900px){.verify{grid-template-columns:1fr}}
+.checks{list-style:none;padding:0;margin:22px 0 0;display:flex;flex-direction:column;gap:12px}
+.checks li{display:flex;gap:11px;align-items:flex-start;font-size:16px}
+.checks svg{flex:none;margin-top:6px;color:var(--c-green)}
+
+/* ── גרסאות ────────────────────────────────────────────────────────── */
+.years{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.year{
+  font-family:var(--f-data);font-size:14px;font-variant-numeric:tabular-nums;
+  border:1px solid var(--line);border-radius:var(--r);padding:7px 13px;
+  background:var(--surface);
+}
+
+/* ── פיילוט ────────────────────────────────────────────────────────── */
+.pilot{
+  margin-top:26px;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--surface);padding:20px 22px;display:flex;gap:14px;
+  align-items:flex-start;
+}
+.pilot .tagdot{
+  width:9px;height:9px;border-radius:50%;background:var(--c-amber);flex:none;
+  margin-top:9px;box-shadow:0 0 0 4px rgba(245,165,36,.16);
+}
+.pilot b{font-family:var(--f-display);font-weight:800}
+.pilot p{color:var(--muted);margin-top:4px;max-width:62ch}
+
+/* ── יצירת קשר ─────────────────────────────────────────────────────── */
+.contact{
+  display:grid;grid-template-columns:.85fr 1.15fr;gap:clamp(26px,4vw,58px);
+  border:1px solid var(--line);border-radius:var(--r);background:var(--surface);
+  padding:clamp(26px,4vw,46px);position:relative;overflow:hidden;
+}
+.contact::before{
+  content:"";position:absolute;inset-block-start:-140px;inset-inline-end:-120px;
+  width:420px;height:340px;pointer-events:none;
+  background:radial-gradient(50% 50% at 50% 50%,rgba(229,57,155,.16),transparent 70%);
+}
+.contact>*{position:relative}
+@media(max-width:900px){.contact{grid-template-columns:1fr}}
+.contact h2{font-size:clamp(26px,3.4vw,38px);font-weight:900}
+.wa{
+  margin-top:26px;display:inline-flex;align-items:center;gap:11px;
+  font-family:var(--f-display);font-weight:800;font-size:16px;
+  text-decoration:none;padding:14px 24px;border-radius:var(--r);
+  background:#25d366;color:#07301a;
+}
+.wa:hover{filter:brightness(1.08)}
+.or{margin-top:20px;color:var(--muted);font-size:14.5px}
+
+form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){form{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.wide{grid-column:1/-1}
+.field label{font-size:14px;font-weight:600}
+.field label .req{color:var(--accent)}
+.field input,.field select,.field textarea{
+  font-family:var(--f-body);font-size:16px;color:var(--text);
+  background:var(--ground);border:1px solid var(--line);border-radius:var(--r);
+  padding:11px 13px;width:100%;
+}
+.field input::placeholder{color:#5b6884}
+.field textarea{resize:vertical;min-height:84px}
+.field input:focus-visible,.field select:focus-visible,
+.field textarea:focus-visible,.btn:focus-visible,.wa:focus-visible,
+.wa-float:focus-visible,.playbtn:focus-visible,a:focus-visible,button:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;
+}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips input{position:absolute;opacity:0;width:0;height:0}
+.chips label{
+  font-family:var(--f-data);font-size:13.5px;font-variant-numeric:tabular-nums;
+  border:1px solid var(--line);border-radius:var(--r);padding:7px 12px;
+  cursor:pointer;user-select:none;background:var(--ground);color:var(--muted);
+}
+.chips label:hover{color:var(--text);border-color:var(--muted)}
+.chips input:checked+label{background:var(--accent);color:var(--accent-ink);
+                           border-color:var(--accent)}
+.chips input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
+.hp{position:absolute!important;left:-9999px;opacity:0;height:0;overflow:hidden}
+.submit-row{grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.form-note{font-size:13.5px;color:var(--muted)}
+.form-msg{grid-column:1/-1;font-size:15px;padding:12px 14px;border-radius:var(--r);display:none}
+.form-msg.ok{display:block;background:rgba(43,197,94,.12);
+             border:1px solid var(--c-green);color:var(--c-green)}
+.form-msg.err{display:block;background:rgba(229,57,155,.12);
+              border:1px solid var(--accent);color:var(--accent)}
+
+/* ── בלוק כותרת ────────────────────────────────────────────────────── */
+footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
+       background:var(--surface)}
+.titleblock{
+  width:var(--page);margin-inline:auto;padding-inline:var(--gutter);
+  display:grid;grid-template-columns:repeat(4,1fr);
+}
+@media(max-width:760px){.titleblock{grid-template-columns:repeat(2,1fr)}}
+.tb{padding:18px 20px;border-inline-start:1px solid var(--line-soft)}
+.tb:first-child{border-inline-start:0;padding-inline-start:0}
+.tb .k{font-family:var(--f-data);font-size:10.5px;letter-spacing:.14em;
+       text-transform:uppercase;color:var(--muted)}
+.tb .v{font-family:var(--f-display);font-weight:800;font-size:15.5px;margin-top:4px}
+.tb .v a{text-decoration:none}
+.tb .v a:hover{color:var(--accent)}
+.tb .v.mail{font-size:13px;font-weight:600;font-family:var(--f-data);
+            overflow-wrap:anywhere;text-align:start}
+.colophon{
+  width:var(--page);margin-inline:auto;padding:14px var(--gutter) 40px;
+  border-top:1px solid var(--line-soft);color:var(--muted);font-size:13.5px;
+  max-width:none;
+}
+
+/* ── כפתור וואטסאפ צף ──────────────────────────────────────────────── */
+.wa-float{
+  position:fixed; inset-block-end:22px; inset-inline-start:22px; z-index:60;
+  display:inline-flex; align-items:center; gap:10px;
+  background:#25d366; color:#07301a; text-decoration:none;
+  font-family:var(--f-display); font-weight:800; font-size:15px;
+  padding:13px 18px; border-radius:999px;
+  box-shadow:0 8px 26px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08) inset;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.wa-float:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.6)}
+.wa-float svg{flex:none}
+@media(max-width:620px){
+  .wa-float{padding:15px;border-radius:50%}
+  .wa-float .wa-text{display:none}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topbar">
+    <a class="wordmark" href="#top" aria-label="MVT AREA מאת MAXIOM, חזרה לראש הדף">
+      <span class="logo" aria-hidden="true">
+        <i style="--c:var(--c-blue)">M</i>
+        <i style="--c:var(--c-violet)">V</i>
+        <i style="--c:var(--c-amber)">T</i>
+        <i style="--c:var(--c-green)">+</i>
+        <i style="--c:var(--c-teal)">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"
+               stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
+               stroke-linejoin="round"><path d="M2.5 8.5l3.6 3.6L13.5 4"/></svg>
+        </i>
+      </span>
+      <span class="wm-text"><b class="ltr">MVT AREA</b><em class="ltr">BY MAXIOM</em></span>
+    </a>
+    <nav>
+      <a href="#how">איך זה עובד</a>
+      <a href="#verify">בדיקה לפני העלאה</a>
+      <a href="#versions">גרסאות</a>
+      <a class="btn-mini" href="#contact">לתיאום הדגמה</a>
+    </nav>
+  </div>
+</header>
+
+<div class="glow" aria-hidden="true"></div>
+
+<main class="sheet" id="top">
+
+  <!-- ראש הדף -->
+  <section class="hero">
+    <div>
+      <div class="eyebrow">
+        <span class="dot"></span>
+        <span class="label">תוסף Revit לחישוב שטחים והגשה</span>
+      </div>
+
+      <h1>הגשת שטחים לרישוי זמין,<br><em>ישר מתוך Revit.</em></h1>
+
+      <p class="lede">
+        מסמנים שטחים, מזינים קוד שימוש, והתוסף מפיק את חבילת ההגשה המלאה:
+        <b class="ltr">DXF</b>, <b class="ltr">DWFX</b> ו<b class="ltr">DAT</b>.
+        לפני שמעלים לפורטל הוא מדמה את תוצר הרובוט ומראה לכם בדיוק מה מנהל
+        התכנון עומד לחשב.
+      </p>
+
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#contact">לתיאום הדגמה</a>
+        <a class="btn btn-ghost" href="#how">איך זה עובד</a>
+      </div>
+
+      <div class="dimension" aria-hidden="true">
+        <span>910 מ"מ</span>
+        <span class="bar"></span>
+        <span>גובה המסגרת המרבי שהרובוט מקבל</span>
+      </div>
+    </div>
+
+    <figure class="frame viewport">
+      <video id="teaser" preload="metadata" playsinline controls
+             aria-label="סרטון הדגמה קצר של MVT AREA">
+        <source src="assets/teaser.mp4" type="video/mp4">
+      </video>
+      <button class="playbtn" id="playbtn" aria-label="הפעלת סרטון ההדגמה">
+        <span><svg width="22" height="24" viewBox="0 0 22 24" fill="currentColor"
+                   aria-hidden="true"><path d="M21 12 0 24V0z"/></svg></span>
+      </button>
+      <figcaption>
+        <span class="label">הדגמה</span>
+        <span class="label">32 שניות</span>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- רצועת נתונים -->
+  <section class="specs" aria-label="נתוני המוצר">
+    <div class="spec"><div class="v ltr">2019&ndash;2027</div><div class="k">גרסאות Revit נתמכות</div></div>
+    <div class="spec"><div class="v ltr">DXF · DWFX · DAT</div><div class="k">חבילת ההגשה המלאה</div></div>
+    <div class="spec"><div class="v">18</div><div class="k">חוקי בדיקה שרצים לפני ההעלאה</div></div>
+    <div class="spec"><div class="v">4</div><div class="k">ספרות דיוק בחישוב השטח</div></div>
+  </section>
+
+  <!-- הבעיה -->
+  <div class="rule"><span class="label"><span class="n">01</span> · הבעיה</span></div>
+  <section class="problem">
+    <div class="shout">שלחת.<br>חיכית.<br><s>נדחה.</s></div>
+    <p>
+      הרובוט של מנהל התכנון לא מסביר את עצמו. הוא מחזיר קוד שגיאה על פוליגון
+      שלא נסגר, על מסגרת שחורגת בכמה מילימטרים, על קומה טיפוסית שנספרה
+      פעמיים, ואת כל זה מגלים רק אחרי שכבר העלו. ואז מתחילים סבב נוסף.
+      <br><br>
+      <b style="color:var(--text)">MVT AREA</b> מריץ את אותן בדיקות אצלכם,
+      בתוך Revit, לפני שמעלים.
+    </p>
+  </section>
+
+  <!-- סדר העבודה -->
+  <div class="rule" id="how"><span class="label"><span class="n">02</span> · סדר העבודה</span></div>
+  <div class="steps">
+
+    <article class="step">
+      <div>
+        <div class="step-num"><i>1</i>שרטוט</div>
+        <h3>מסמנים שטח, והקוד נכנס באותה תנועה</h3>
+        <p>
+          משרטטים גבול והתוסף פותח מיד את בוחר קוד השימוש. בוחרים שטח בלחיצה
+          בתוך הפוליגון, בלי לכוון לקו הגבול, וממשיכים לצבוע שטחים באותו קוד
+          עד שלוחצים Escape.
+        </p>
+      </div>
+      <figure class="frame">
+        <img src="assets/img/code.webp" width="1400" height="718" loading="lazy"
+             alt="חלון הזנת קוד שימוש של MVT AREA פתוח לצד תוכנית שטחים ב-Revit">
+        <figcaption><span class="label">הזנת קוד שימוש</span></figcaption>
+      </figure>
+    </article>
+
+    <article class="step">
+      <div>
+        <div class="step-num"><i>2</i>קודים</div>
+        <h3>רשימות קודים לפי רשות, וגם רשימה משלכם</h3>
+        <p>
+          כלל ארצי, ירושלים ותל אביב מגיעים מוכנים ומתעדכנים מהשרת. אפשר ליצור
+          עותק אישי ומקושר: הקודים שהוספתם נשמרים, והעדכונים מהשרת ממשיכים
+          להיכנס אליו מבלי לדרוס אתכם.
+        </p>
+      </div>
+      <figure class="frame">
+        <img src="assets/img/tagged.webp" width="1400" height="715" loading="lazy"
+             alt="תוכנית שטחים ב-Revit עם שטחים מתויגים בקודי שימוש">
+        <figcaption><span class="label">שטחים מתויגים</span></figcaption>
+      </figure>
+    </article>
+
+    <article class="step">
+      <div>
+        <div class="step-num"><i>3</i>קומות</div>
+        <h3>קומה טיפוסית שנספרת נכון</h3>
+        <p>
+          מקבצים מפלסים לקומה טיפוסית אחת, והתוסף מכפיל אותה בחישוב ומציג את
+          טווח הקומות האמיתי, למשל "טיפוסית 2 עד 10", גם בשמות המבטים וגם
+          בעץ השטחים. ספירה כפולה נעצרת אצלכם כשגיאה חוסמת ולא מגיעה כהפתעה
+          מהרובוט.
+        </p>
+      </div>
+      <figure class="frame">
+        <img src="assets/img/plan.webp" width="1500" height="888" loading="lazy"
+             alt="עץ השטחים של MVT AREA לצד תוכנית שטחים צבועה ב-Revit">
+        <figcaption><span class="label">עץ שטחים לפי גיליון, בניין, מבט וקוד</span></figcaption>
+      </figure>
+    </article>
+
+    <article class="step">
+      <div>
+        <div class="step-num"><i>4</i>גיליון</div>
+        <h3>גיליון גרמושקה בגודל ההדפסה האמיתי</h3>
+        <p>
+          התוסף בונה את הגיליון, פורס עליו את המבטים ומפצל אוטומטית למסגרות של
+          עד 14 מטר, כשהמסגרת הימנית ממוספרת 1, בדיוק כפי שהרובוט מצפה למצוא
+          אותה.
+        </p>
+      </div>
+      <figure class="frame">
+        <img src="assets/img/gramushka.webp" width="1500" height="888" loading="lazy"
+             alt="דף גרמושקה שהופק ב-MVT AREA בגודל ההדפסה האמיתי">
+        <figcaption><span class="label">גיליון הגשה</span></figcaption>
+      </figure>
+    </article>
+
+    <article class="step">
+      <div>
+        <div class="step-num"><i>5</i>ייצוא</div>
+        <h3>ייצוא אחד, שלושת הקבצים</h3>
+        <p>
+          קובץ DXF עם שכבות ה-RZ, קובץ DWFX מיושר, וקובץ DAT עם סקייל שנמדד
+          מהקובץ עצמו ולא מתוך הנחה. זה בדיוק מה שעולה לפורטל.
+        </p>
+      </div>
+      <figure class="frame">
+        <img src="assets/img/export.webp" width="1300" height="688" loading="lazy"
+             alt="תיקיית הפלט של MVT AREA עם קבצי DXF, DWFX ו-DAT">
+        <figcaption><span class="label">תוצרי הייצוא</span></figcaption>
+      </figure>
+    </article>
+
+  </div>
+
+  <!-- בדיקה לפני העלאה -->
+  <div class="rule" id="verify"><span class="label"><span class="n">03</span> · לפני שמעלים</span></div>
+  <section class="verify">
+    <div>
+      <h2 style="font-size:clamp(24px,3.2vw,34px);font-weight:900">
+        לראות את תוצר הרובוט לפני הרובוט
+      </h2>
+      <p class="lede" style="max-width:42ch">
+        "בדיקת שטחים" מפיקה דוח בפורמט של מנהל התכנון: שורה לכל קומה ולכל
+        בניין, על גבי השרטוט, במיקומים האמיתיים של הגיליון. אלה חלק
+        מהדברים שהיא תופסת:
+      </p>
+      <ul class="checks">
+        <li><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"/></svg><span>פוליגון שלא נסגר, כשהפער גדול ממילימטר אחד</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"/></svg><span>גודל הדפסה שחורג מ-910 מ"מ בגובה או ממסגרת של 14 מטר</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"/></svg><span>מפלס שנספר פעמיים, בין קומה טיפוסית למבט רגיל</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"/></svg><span>שטח מוצע שסומן בטעות כקיים בהיתר ולכן נגרע מהחישוב</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"/></svg><span>שטחים חופפים, וקוד שימוש שנשאר ריק</span></li>
+      </ul>
+    </div>
+    <figure class="frame">
+      <img src="assets/img/report.webp" width="1400" height="779" loading="lazy"
+           alt="דוח סימולציית חישוב שטחים של MVT AREA בפורמט של מנהל התכנון">
+      <figcaption><span class="label">סימולציית חישוב במבנה טבלה של רישוי זמין</span></figcaption>
+    </figure>
+  </section>
+
+  <!-- תאימות -->
+  <div class="rule" id="versions"><span class="label"><span class="n">04</span> · תאימות</span></div>
+  <section>
+    <p class="lede" style="max-width:56ch;margin-top:0">
+      מתקין אחד לכל הגרסאות. התוסף יושב לצד PolyWiz בלי להתנגש בו: ריבון
+      נפרד, הגדרות נפרדות, הסרה נפרדת.
+    </p>
+    <div class="years">
+      <span class="year">2019</span><span class="year">2020</span>
+      <span class="year">2021</span><span class="year">2022</span>
+      <span class="year">2023</span><span class="year">2024</span>
+      <span class="year">2025</span><span class="year">2026</span>
+      <span class="year">2027</span>
+    </div>
+
+    <div class="pilot">
+      <span class="tagdot" aria-hidden="true"></span>
+      <div>
+        <b>המוצר נמצא כרגע בפיילוט</b>
+        <p>
+          אנחנו עובדים עם קבוצה מצומצמת של משרדים לפני ההשקה הרחבה. מי שנכנס
+          בשלב הזה מקבל ליווי אישי, מענה מהיר, והשפעה ישירה על מה שנבנה הלאה.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- יצירת קשר -->
+  <div class="rule" id="contact"><span class="label"><span class="n">05</span> · יצירת קשר</span></div>
+  <section class="contact">
+    <div>
+      <h2>נראה לכם רלוונטי?</h2>
+      <p class="lede">
+        הדגמה קצרה על המסך שלכם, עשר דקות, בלי להתקין כלום. נעבור יחד על
+        המסלול המלא, על פרויקט אמיתי.
+      </p>
+      <a class="wa"
+         href="https://wa.me/972507203778?text=%D7%94%D7%99%D7%99%2C%20%D7%A8%D7%90%D7%99%D7%AA%D7%99%20%D7%90%D7%AA%20%D7%94%D7%90%D7%AA%D7%A8%20%D7%A9%D7%9C%20MVT%20AREA%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A2%D7%95%D7%93"
+         target="_blank" rel="noopener">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 2a8 8 0 1 1-4.1 14.9l-.4-.2-3 .8.8-2.9-.2-.4A8 8 0 0 1 12 4zm-3.4 4c-.2 0-.5.1-.7.4-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.2.2 1.8 2.9 4.5 3.9 2.2.9 2.7.7 3.2.7.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.3l-2-1c-.3-.1-.5-.1-.7.1l-.8 1c-.1.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.1-.3 0-.4.1-.6l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5z"/>
+        </svg>
+        שיחה בוואטסאפ, 050-7203778
+      </a>
+      <p class="or">או שתשאירו פרטים ונחזור אליכם ביום העסקים הקרוב.</p>
+    </div>
+
+    <form id="lead-form" novalidate>
+      <div class="field">
+        <label for="f-name">שם מלא <span class="req">*</span></label>
+        <input id="f-name" name="name" type="text" autocomplete="name" required>
+      </div>
+      <div class="field">
+        <label for="f-phone">טלפון נייד <span class="req">*</span></label>
+        <input id="f-phone" name="phone" type="tel" inputmode="tel"
+               autocomplete="tel" placeholder="050-0000000" required>
+      </div>
+      <div class="field">
+        <label for="f-email">אימייל</label>
+        <input id="f-email" name="email" type="email" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="f-company">משרד או חברה</label>
+        <input id="f-company" name="company" type="text" autocomplete="organization">
+      </div>
+
+      <div class="field wide">
+        <label for="f-role">תפקיד</label>
+        <select id="f-role" name="role">
+          <option value="">בחרו מהרשימה</option>
+          <option>אדריכל או אדריכלית</option>
+          <option>בעל או בעלת משרד</option>
+          <option>ניהול פרויקטים</option>
+          <option>תכנון BIM</option>
+          <option>הנדסאי או הנדסאית אדריכלות</option>
+          <option>אחר</option>
+        </select>
+      </div>
+
+      <div class="field wide">
+        <label>באיזו גרסת Revit אתם עובדים?</label>
+        <div class="chips" id="chips-revit">
+          <input type="checkbox" id="rv1" name="revit" value="2019-2021"><label for="rv1">2019&ndash;2021</label>
+          <input type="checkbox" id="rv2" name="revit" value="2022-2024"><label for="rv2">2022&ndash;2024</label>
+          <input type="checkbox" id="rv3" name="revit" value="2025"><label for="rv3">2025</label>
+          <input type="checkbox" id="rv4" name="revit" value="2026"><label for="rv4">2026</label>
+          <input type="checkbox" id="rv5" name="revit" value="2027"><label for="rv5">2027</label>
+        </div>
+      </div>
+
+      <div class="field wide">
+        <label>מה מעניין אתכם?</label>
+        <div class="chips" id="chips-interest">
+          <input type="checkbox" id="in1" name="interest" value="הדגמה" checked><label for="in1">הדגמה</label>
+          <input type="checkbox" id="in2" name="interest" value="הצטרפות לפיילוט"><label for="in2">הצטרפות לפיילוט</label>
+          <input type="checkbox" id="in3" name="interest" value="מחיר ותנאים"><label for="in3">מחיר ותנאים</label>
+          <input type="checkbox" id="in4" name="interest" value="עדכון בהשקה"><label for="in4">עדכון בהשקה</label>
+        </div>
+      </div>
+
+      <div class="field wide">
+        <label for="f-notes">משהו שכדאי שנדע לפני שנחזור אליכם?</label>
+        <textarea id="f-notes" name="notes" rows="3"></textarea>
+      </div>
+
+      <div class="hp" aria-hidden="true">
+        <label for="f-website">אתר</label>
+        <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+
+      <div class="submit-row">
+        <button class="btn btn-primary" type="submit" id="submit-btn">שליחת פרטים</button>
+        <span class="form-note">הפרטים מגיעים אלינו בלבד. לא נשלח דיוור.</span>
+      </div>
+      <div class="form-msg" id="form-msg" role="status" aria-live="polite"></div>
+    </form>
+  </section>
+
+</main>
+
+<footer>
+  <div class="titleblock">
+    <div class="tb">
+      <div class="k">חברה</div>
+      <div class="v ltr">MAXIOM</div>
+    </div>
+    <div class="tb">
+      <div class="k">מוצר</div>
+      <div class="v ltr">MVT AREA</div>
+    </div>
+    <div class="tb">
+      <div class="k">טלפון</div>
+      <div class="v"><a href="tel:0507203778">050-7203778</a></div>
+    </div>
+    <div class="tb">
+      <div class="k">אימייל</div>
+      <div class="v mail ltr"><a href="mailto:orelrockah@outlook.co.il">orelrockah@outlook.co.il</a></div>
+    </div>
+  </div>
+  <div class="colophon">
+    MVT AREA הוא מוצר של MAXIOM. השמות Revit ו-Autodesk הם סימנים מסחריים של
+    Autodesk, Inc. אין בין MAXIOM ובין Autodesk או מנהל התכנון קשר רשמי.
+  </div>
+</footer>
+
+<a class="wa-float"
+   href="https://wa.me/972507203778?text=%D7%94%D7%99%D7%99%2C%20%D7%A8%D7%90%D7%99%D7%AA%D7%99%20%D7%90%D7%AA%20%D7%94%D7%90%D7%AA%D7%A8%20%D7%A9%D7%9C%20MVT%20AREA%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A2%D7%95%D7%93"
+   target="_blank" rel="noopener" aria-label="פתיחת שיחה בוואטסאפ">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 2a8 8 0 1 1-4.1 14.9l-.4-.2-3 .8.8-2.9-.2-.4A8 8 0 0 1 12 4zm-3.4 4c-.2 0-.5.1-.7.4-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.2.2 1.8 2.9 4.5 3.9 2.2.9 2.7.7 3.2.7.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.3l-2-1c-.3-.1-.5-.1-.7.1l-.8 1c-.1.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.1-.3 0-.4.1-.6l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5z"/>
+  </svg>
+  <span class="wa-text">וואטסאפ</span>
+</a>
+
+<script>
+/* כתובת ה-Web App של Apps Script, גיליון הלידים */
+const LEADS_ENDPOINT =
+  "https://script.google.com/macros/s/AKfycbwB4h0s4ci19OAD1iuBitF2DDAtLY6HnXmQiggrCn4oJmWz_MN2tux--5Iahnf8WuOk/exec";
+
+/* נגן הווידאו */
+(function(){
+  const v = document.getElementById('teaser');
+  const b = document.getElementById('playbtn');
+  if(!v || !b) return;
+  b.addEventListener('click', () => { v.play(); b.classList.add('hidden'); });
+  v.addEventListener('play',  () => b.classList.add('hidden'));
+  v.addEventListener('pause', () => { if(!v.ended) b.classList.remove('hidden'); });
+})();
+
+/* טופס הלידים */
+(function(){
+  const form = document.getElementById('lead-form');
+  const msg  = document.getElementById('form-msg');
+  const btn  = document.getElementById('submit-btn');
+  if(!form) return;
+
+  const checked = sel =>
+    [...document.querySelectorAll(sel + ' input:checked')].map(i => i.value);
+
+  const show = (text, kind) => {
+    msg.textContent = text;
+    msg.className = 'form-msg ' + kind;
+  };
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const name  = form.name.value.trim();
+    const phone = form.phone.value.trim();
+
+    if(!name){
+      show('צריך שם מלא כדי שנדע למי לחזור.', 'err');
+      form.name.focus(); return;
+    }
+    if(!/^0\d{1,2}-?\d{7}$/.test(phone.replace(/\s/g,''))){
+      show('מספר הטלפון לא נראה תקין. לדוגמה: 050-1234567', 'err');
+      form.phone.focus(); return;
+    }
+
+    const payload = {
+      name, phone,
+      email:   form.email.value.trim(),
+      company: form.company.value.trim(),
+      role:    form.role.value,
+      revitVersions: checked('#chips-revit'),
+      interest:      checked('#chips-interest'),
+      notes:   form.notes.value.trim(),
+      website: form.website.value,
+      source:  'mvt.maxiom.co.il'
+    };
+
+    btn.disabled = true;
+    btn.textContent = 'שולח';
+
+    try{
+      /* text/plain הופך את הבקשה ל"פשוטה" ולכן היא לא מפעילה preflight
+         מול Apps Script, שאינו מחזיר כותרות CORS */
+      await fetch(LEADS_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      form.reset();
+      show('קיבלנו. נחזור אליכם ביום העסקים הקרוב.', 'ok');
+      btn.textContent = 'נשלח';
+    }catch(err){
+      show('השליחה נכשלה. אפשר לפנות בוואטסאפ במקום, דרך הכפתור הירוק.', 'err');
+      btn.disabled = false;
+      btn.textContent = 'שליחת פרטים';
+    }
+  });
+})();
+</script>
+</body>
+</html>

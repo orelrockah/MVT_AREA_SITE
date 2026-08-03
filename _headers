@@ -1,0 +1,15 @@
+# כותרות HTTP ל-Cloudflare Pages
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+# נכסים עם שם קבוע. נשמרים במטמון לשנה כדי שביקור חוזר לא יוריד אותם שוב.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# הדף עצמו נבדק מול השרת בכל טעינה, כך שעדכון תוכן מופיע מיד.
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
