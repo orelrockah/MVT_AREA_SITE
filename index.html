@@ -1,14 +1,8 @@
 <!doctype html>
 <html lang="he" dir="rtl">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-KE4F2425SE"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-KE4F2425SE');
-</script>
+<!-- Google Analytics + Microsoft Clarity נטענים רק אחרי הסכמה בבאנר העוגיות,
+     ר' loadAnalytics_() בתחתית הדף -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MVT AREA | הגשת שטחים לרישוי זמין מתוך Revit</title>
@@ -478,6 +472,21 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
   .wa-float .wa-text{display:none}
 }
 
+/* ── באנר עוגיות ───────────────────────────────────────────────────── */
+.cookie-banner{
+  position:fixed;inset-inline:0;inset-block-end:0;z-index:70;
+  background:var(--surface);border-top:1px solid var(--line);
+  box-shadow:0 -10px 30px rgba(0,0,0,.4);
+  padding:16px var(--gutter);
+  display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between;
+}
+.cookie-banner.hidden{display:none}
+.cookie-banner p{font-size:14px;color:var(--muted);max-width:70ch;margin:0}
+.cookie-actions{display:flex;gap:10px;flex:none}
+@media(max-width:620px){
+  .cookie-banner{padding-inline-start:calc(var(--gutter) + 60px)}
+}
+
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
@@ -860,7 +869,7 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
   <div class="pm-head">
     <div>
       <h2 id="pm-title">הצהרת פרטיות</h2>
-      <div class="sub">עודכנה ב-3 באוגוסט 2026</div>
+      <div class="sub">עודכנה ב-4 באוגוסט 2026</div>
     </div>
     <button type="button" class="pm-close" id="pm-close" aria-label="סגירה">&times;</button>
   </div>
@@ -905,7 +914,7 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
     <h3>למי מועבר המידע</h3>
     <p>
       איננו מוכרים, משכירים או מעבירים את פרטיכם לצד שלישי כלשהו לצורכי
-      שיווק. לצורך ההפעלה הטכנית של האתר המידע עובר דרך שני נותני שירות:
+      שיווק. לצורך ההפעלה הטכנית של האתר המידע עובר דרך שלושה נותני שירות:
     </p>
     <ul>
       <li>
@@ -913,6 +922,12 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
         וההתראה עליהם נשלחת בדואר אלקטרוני דרך Google Apps Script. בנוסף
         האתר מפעיל Google Analytics למדידת שימוש בדפים. שרתי החברה נמצאים
         גם מחוץ לישראל.
+      </li>
+      <li>
+        <b>Microsoft Clarity</b>. כלי לניתוח התנהגות גולשים באתר (מפות חום
+        והקלטות מסך אנונימיות של תנועת העכבר והגלילה) שעוזר לנו להבין אילו
+        חלקים באתר עובדים ואילו לא. כברירת מחדל הכלי מטשטש (מסתיר) את מה
+        שמקלידים בשדות טופס, ואינו מקליט את התוכן עצמו.
       </li>
       <li>
         <b>Cloudflare</b>. מארחת את האתר ומעבירה אליו את התעבורה. במסגרת
@@ -960,11 +975,15 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
 
     <h3>עוגיות ומעקב</h3>
     <p>
-      האתר מפעיל Google Analytics כדי להבין כמה מבקרים מגיעים, אילו דפים
-      נצפים ומאיפה מגיעה התנועה. הכלי עשוי להציב עוגיות או מזהים דומים בצד
-      Google. איננו מפעילים כלי פרסום ממומן ואיננו מבצעים פרופיילינג או
-      קבלת החלטות אוטומטית לגביכם. ייתכן שרשת האחסון של Cloudflare תציב
-      עוגייה טכנית הנדרשת לאבטחה ולזיהוי תעבורה אוטומטית.
+      עוגיות אנליטיות (Google Analytics, Microsoft Clarity) <b>לא</b> נטענות
+      אוטומטית: הן מופעלות רק אם תלחצו "אישור" בבאנר העוגיות שמופיע בכניסה
+      לאתר. אם תבחרו "רק חיוני" הן לא ייטענו כלל, והבחירה שלכם נשמרת מקומית
+      בדפדפן בלבד ולא נשלחת אלינו. לאחר הסכמה, Google Analytics עוזר לנו
+      להבין כמה מבקרים מגיעים ואילו דפים נצפים, ו-Microsoft Clarity עוזר
+      להבין איך גולשים מתנהלים בתוך הדף (מפות חום, גלילה והקלטות מסך
+      אנונימיות). איננו מפעילים כלי פרסום ממומן ואיננו מבצעים פרופיילינג או
+      קבלת החלטות אוטומטית לגביכם. עוגייה טכנית אחת של Cloudflare, הנדרשת
+      לאבטחה ולזיהוי תעבורה אוטומטית, פועלת תמיד ואינה תלויה בהסכמה זו.
     </p>
 
     <h3>שינויים בהצהרה</h3>
@@ -996,7 +1015,64 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
   </div>
 </dialog>
 
+<div class="cookie-banner hidden" id="cookie-banner" role="dialog" aria-label="הודעת עוגיות">
+  <p>
+    האתר משתמש בעוגיות אנליטיות (Google Analytics, Microsoft Clarity) כדי להבין איך
+    האתר נמצא בשימוש. אפשר לקרוא עוד ב<button type="button" class="linkbtn"
+    id="cb-privacy">הצהרת הפרטיות</button>.
+  </p>
+  <div class="cookie-actions">
+    <button type="button" class="btn btn-ghost" id="cb-decline">רק חיוני</button>
+    <button type="button" class="btn btn-primary" id="cb-accept">אישור</button>
+  </div>
+</div>
+
 <script>
+/* הסכמת עוגיות — פרטיות כברירת מחדל (privacy by default): שום עוגיה
+   אנליטית לא נטענת עד שנלחץ "אישור". הבחירה עצמה נשמרת רק מקומית
+   (localStorage בדפדפן), לא נשלחת לשום שרת — מינימום מידע אפשרי. */
+(function(){
+  const KEY = 'cookie-consent';
+  const banner = document.getElementById('cookie-banner');
+
+  function loadAnalytics_(){
+    const ga = document.createElement('script');
+    ga.async = true;
+    ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-KE4F2425SE';
+    document.head.appendChild(ga);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-KE4F2425SE');
+
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "xx7aup022q");
+  }
+
+  const choice = localStorage.getItem(KEY);
+  if (choice === 'accepted') {
+    loadAnalytics_();
+  } else if (choice !== 'declined') {
+    banner?.classList.remove('hidden');
+  }
+
+  document.getElementById('cb-accept')?.addEventListener('click', () => {
+    localStorage.setItem(KEY, 'accepted');
+    banner?.classList.add('hidden');
+    loadAnalytics_();
+  });
+  document.getElementById('cb-decline')?.addEventListener('click', () => {
+    localStorage.setItem(KEY, 'declined');
+    banner?.classList.add('hidden');
+  });
+  document.getElementById('cb-privacy')?.addEventListener('click', () => {
+    document.getElementById('open-privacy-footer')?.click();
+  });
+})();
+
 /* כתובת ה-Web App של Apps Script, גיליון הלידים */
 const LEADS_ENDPOINT =
   "https://script.google.com/macros/s/AKfycbzlsjNaJmjRHQoGmeepDX8K85BBWxXLXsD7NkNwkiIoZzxXGzNzrPHlXf5Ipua4pcWv/exec";
@@ -1041,8 +1117,10 @@ const LEADS_ENDPOINT =
 
   /* מעקב צפייה ב-GA4 — לא אוטומטי כמו יוטיוב, כי זה <video> נטיבי.
      שמות האירועים/הפרמטרים תואמים למה שגוגל ממליצה למי שמדווח וידאו
-     ידנית: https://support.google.com/analytics/answer/9267735 */
-  if (typeof gtag !== 'function') return;
+     ידנית: https://support.google.com/analytics/answer/9267735
+     gtag נטען רק אחרי הסכמה לעוגיות (יכול לקרות אחרי שהחלון כבר נפתח),
+     אז כל קריאה נבדקת בזמן אמת ולא נקבעת פעם אחת בטעינת הדף. */
+  const track_ = (name, params) => { if (typeof gtag === 'function') gtag('event', name, params); };
   const gaParams = pct => ({
     video_current_time: Math.round(video.currentTime),
     video_duration: Math.round(video.duration) || undefined,
@@ -1052,11 +1130,11 @@ const LEADS_ENDPOINT =
     video_url: video.currentSrc,
   });
   let started = false, firedPct = new Set();
-  document.getElementById('open-demo')?.addEventListener('click', () => gtag('event', 'demo_modal_open'));
+  document.getElementById('open-demo')?.addEventListener('click', () => track_('demo_modal_open'));
   video.addEventListener('play', () => {
     if (started) return;
     started = true;
-    gtag('event', 'video_start', gaParams(0));
+    track_('video_start', gaParams(0));
   });
   video.addEventListener('timeupdate', () => {
     if (!video.duration) return;
@@ -1064,11 +1142,11 @@ const LEADS_ENDPOINT =
     for (const milestone of [25, 50, 75]) {
       if (pct >= milestone && !firedPct.has(milestone)) {
         firedPct.add(milestone);
-        gtag('event', 'video_progress', gaParams(milestone));
+        track_('video_progress', gaParams(milestone));
       }
     }
   });
-  video.addEventListener('ended', () => gtag('event', 'video_complete', gaParams(100)));
+  video.addEventListener('ended', () => track_('video_complete', gaParams(100)));
   /* איפוס כשהחלון נסגר, כדי שפתיחה הבאה תדווח כצפייה חדשה */
   modal.addEventListener('close', () => { started = false; firedPct.clear(); });
 })();
