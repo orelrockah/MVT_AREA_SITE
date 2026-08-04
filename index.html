@@ -1038,6 +1038,39 @@ const LEADS_ENDPOINT =
   modal.addEventListener('click', e => { if(e.target === modal) modal.close(); });
   /* עוצר את הנגן בכל דרך סגירה (X, רקע, Escape) */
   modal.addEventListener('close', () => video.pause());
+
+  /* מעקב צפייה ב-GA4 — לא אוטומטי כמו יוטיוב, כי זה <video> נטיבי.
+     שמות האירועים/הפרמטרים תואמים למה שגוגל ממליצה למי שמדווח וידאו
+     ידנית: https://support.google.com/analytics/answer/9267735 */
+  if (typeof gtag !== 'function') return;
+  const gaParams = pct => ({
+    video_current_time: Math.round(video.currentTime),
+    video_duration: Math.round(video.duration) || undefined,
+    video_percent: pct,
+    video_provider: 'self-hosted',
+    video_title: 'הדגמה מלאה של MVT AREA',
+    video_url: video.currentSrc,
+  });
+  let started = false, firedPct = new Set();
+  document.getElementById('open-demo')?.addEventListener('click', () => gtag('event', 'demo_modal_open'));
+  video.addEventListener('play', () => {
+    if (started) return;
+    started = true;
+    gtag('event', 'video_start', gaParams(0));
+  });
+  video.addEventListener('timeupdate', () => {
+    if (!video.duration) return;
+    const pct = Math.floor((video.currentTime / video.duration) * 100);
+    for (const milestone of [25, 50, 75]) {
+      if (pct >= milestone && !firedPct.has(milestone)) {
+        firedPct.add(milestone);
+        gtag('event', 'video_progress', gaParams(milestone));
+      }
+    }
+  });
+  video.addEventListener('ended', () => gtag('event', 'video_complete', gaParams(100)));
+  /* איפוס כשהחלון נסגר, כדי שפתיחה הבאה תדווח כצפייה חדשה */
+  modal.addEventListener('close', () => { started = false; firedPct.clear(); });
 })();
 
 /* טופס הלידים */
