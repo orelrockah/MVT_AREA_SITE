@@ -94,6 +94,11 @@ Apps Script בענן, ואז **Deploy → Manage deployments → New version** �
 - `video_progress` — באחוזי 25/50/75 (`video_percent`).
 - `video_complete` — הגיע לסוף.
 
+**אירוע ההמרה עצמו:** `generate_lead` (שם סטנדרטי של GA4) נשלח מתוך `#lead-form` אחרי
+`fetch` מוצלח ל-Apps Script (ר' "זרימת הלידים" למעלה) — פרמטר `lead_interest` בלבד
+(קטגוריית העניין מהצ'קבוקסים), **בלי** שם/טלפון/מייל. בלעדיו אין נקודת המרה אמיתית ב-GA4,
+רק אירועי מעורבות בסרטון — כדאי לסמן אותו כ-Key Event ב-GA4 Admin → Events.
+
 צפייה: GA4 → Reports → Realtime (מיידי, לבדיקות) או Engagement → Events (לאורך זמן, יש
 עיכוב של עד 24-48 שעות). למשפך "פתחו → התחילו → סיימו" — Explore → Funnel exploration.
 

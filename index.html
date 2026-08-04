@@ -1221,6 +1221,11 @@ const LEADS_ENDPOINT =
       form.reset();
       show('קיבלנו. נחזור אליכם ביום העסקים הקרוב.', 'ok');
       btn.textContent = 'נשלח';
+      /* אירוע GA4 סטנדרטי להמרה — מאפשר לסמן "אירוע מרכזי" ולקבל דוחות
+         המרה מובנים. לא נשלח שם/טלפון/מייל, רק קטגוריית עניין. */
+      if (typeof gtag === 'function') {
+        gtag('event', 'generate_lead', { lead_interest: payload.interest.join(',') });
+      }
     }catch(err){
       show('השליחה נכשלה. אפשר לפנות בוואטסאפ במקום, דרך הכפתור הירוק.', 'err');
       btn.disabled = false;
