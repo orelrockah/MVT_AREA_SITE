@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MVT AREA | הגשת שטחים לרישוי זמין מתוך Revit</title>
 <meta name="description" content="תוסף Revit שמחשב שטחים ומפיק את חבילת ההגשה לרובוט של מנהל התכנון: DXF, DWFX ו-DAT. כולל בדיקה שמדמה את תוצר הרובוט לפני שמעלים. תומך ב-Revit 2019 עד 2027.">
-<meta name="theme-color" content="#090d16">
+<meta name="theme-color" content="#F4F6F8">
 <meta property="og:title" content="MVT AREA | הגשת שטחים לרישוי זמין מתוך Revit">
 <meta property="og:description" content="מסמנים שטחים, מזינים קוד שימוש, והתוסף מפיק את חבילת ההגשה המלאה. בדיקה עצמית לפני ההעלאה לפורטל.">
 <meta property="og:type" content="website">
@@ -17,31 +17,42 @@
 /* ═══════════════════════════════════════════════════════════════════════
    MAXIOM · דף המוצר של MVT AREA
    ───────────────────────────────────────────────────────────────────────
-   עולם חזותי אחד, כהה בלבד. הפלטה נלקחה מחמשת אייקוני הלוגו: כחול,
-   סגול, כתום, ירוק וטורקיז, על רקע נייבי כמעט שחור. הזוהר המג'נטה הוא
-   גם הצבע של קו גבול Area ברוויט.
-   כל שלב בסדר העבודה נושא את אחד מחמשת צבעי הלוגו.
+   שפת העיצוב המחייבת של המוצר — ../MVT_AREA/docs/DESIGN_LANGUAGE.md,
+   אותם טוקנים בדיוק כמו MvtTheme.cs שבתוסף עצמו: רקע אפרפר רך, כרטיסים
+   לבנים, Accent כחול עמוק אחד ויחיד, פינות 4px "טכניות כמו Revit".
+   בלי קשתות צבע — ההדגשה החזקה היחידה בדף היא הכפתור הראשי.
+   הצבעים הסמנטיים (חוסם/אזהרה/מידע/תקין) הם אותם צבעים שהמשתמש רואה
+   בחלון ה-QA בתוסף, ולכן משמשים כאן רק לאותה משמעות.
+   חריג מכוון: ירוק וואטסאפ (#25d366) הוא סימן פלטפורמה של צד שלישי,
+   כמו השמות Revit/Autodesk — לא צבע מהפלטה שלנו ולא קישוט.
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root{
-  --ground:#090d16;
-  --surface:#111a2b;
-  --surface-2:#18223a;
-  --line:#243050;
-  --line-soft:#182238;
+  /* בסיס — זהה ל-MvtTheme.cs */
+  --ground:#F4F6F8;
+  --surface:#FFFFFF;
+  --surface-2:#F1F5F9;
+  --line:#CBD5E1;
+  --line-soft:#E2E8F0;
 
-  --text:#e9edf6;
-  --muted:#8a96ad;
+  --text:#0F172A;
+  --muted:#64748B;
 
-  --accent:#e5399b;
-  --accent-ink:#14030c;
+  --accent:#1D4ED8;
+  --accent-dark:#173EAC;
+  --accent-soft:#DBEAFE;
+  --danger:#DC2626;
 
-  --c-blue:#3b82f6;
-  --c-violet:#8b5cf6;
-  --c-amber:#f5a524;
-  --c-green:#2bc55e;
-  --c-teal:#16c4ac;
+  /* סמנטיים — QA וסטטוס */
+  --block:#B91C1C;      --block-bg:#FDECEC;
+  --warn:#B45309;       --warn-bg:#FEF6E7;
+  --info:#0369A1;       --info-bg:#E8F2FA;
+  --ok:#15803D;         --ok-bg:#E9F7EE;
 
+  /* קו האייקונים — חפץ מהמציאות בקו כהה, אלמנט הפעולה ב-Accent */
+  --ink:#33475C;
+
+  /* פונט מותג — לשיווק ולאתר בלבד; בתוך המוצר Segoe UI */
   --f-display:"Heebo","Segoe UI",system-ui,sans-serif;
   --f-body:"Assistant","Segoe UI",system-ui,sans-serif;
   --f-data:ui-monospace,"Consolas","SFMono-Regular",monospace;
@@ -50,7 +61,7 @@
   --gutter:clamp(18px,4vw,64px);
   --r:4px;
 
-  color-scheme:dark;
+  color-scheme:light;
 }
 
 *{box-sizing:border-box}
@@ -64,21 +75,17 @@ img,video{max-width:100%;display:block}
 a{color:inherit}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.18}
 p{margin:0}
-::selection{background:var(--accent);color:#fff}
+::selection{background:var(--accent-soft);color:var(--text)}
 
 /* ערכים באנגלית בלבד: נעילת כיוון כדי שהסדר לא יתהפך בהקשר RTL */
 .ltr{direction:ltr;unicode-bidi:isolate}
 
-/* זוהר סביבתי מאחורי ראש הדף */
+/* רחיצה עדינה מאחורי ראש הדף — גוון אחד, אותו Accent */
 .glow{
-  position:absolute; inset-block-start:-260px; inset-inline-start:50%;
+  position:absolute; inset-block-start:-300px; inset-inline-start:50%;
   transform:translateX(50%);
-  width:min(1100px,120vw); height:720px; pointer-events:none; z-index:0;
-  background:
-    radial-gradient(46% 42% at 50% 62%, rgba(229,57,155,.20), transparent 70%),
-    radial-gradient(38% 34% at 26% 46%, rgba(59,130,246,.15), transparent 70%),
-    radial-gradient(34% 32% at 74% 44%, rgba(139,92,246,.14), transparent 70%);
-  filter:blur(14px);
+  width:min(1100px,120vw); height:760px; pointer-events:none; z-index:0;
+  background:radial-gradient(48% 44% at 50% 62%, rgba(29,78,216,.10), transparent 72%);
 }
 
 /* ── מסגרת הגיליון ─────────────────────────────────────────────────── */
@@ -112,8 +119,8 @@ p{margin:0}
 
 /* ── כותרת עליונה ──────────────────────────────────────────────────── */
 header{
-  border-bottom:1px solid var(--line-soft); position:sticky; top:0; z-index:40;
-  background:rgba(9,13,22,.82); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line); position:sticky; top:0; z-index:40;
+  background:rgba(244,246,248,.88); backdrop-filter:blur(12px);
 }
 .topbar{
   width:var(--page); margin-inline:auto; padding:13px var(--gutter);
@@ -121,22 +128,24 @@ header{
 }
 
 /* הלוגו נבנה ב-CSS ולא כתמונה: חד בכל גודל, בלי בקשת רשת נוספת.
-   חמשת הצבעים כאן הם אותם צבעים שנושאים את שלבי סדר העבודה. */
+   Accent אחד (כלל השפה: בלי קשתות צבע) — האריח האחרון, סימן ה-V של
+   "עבר את הבדיקה", הוא היחיד שנושא את ה-Accent המלא; השאר בגוון הכהה. */
 .wordmark{display:inline-flex;align-items:center;gap:13px;text-decoration:none}
-.logo{display:inline-flex;gap:5px;flex:none}
+.logo{display:inline-flex;gap:4px;flex:none}
 .logo i{
-  width:26px;height:26px;border-radius:7px;background:var(--c);
+  width:26px;height:26px;border-radius:var(--r);background:var(--ink);
   display:grid;place-items:center;font-style:normal;
   font-family:var(--f-display);font-weight:900;font-size:14px;
-  color:#08111f;line-height:1;
+  color:#fff;line-height:1;
 }
+.logo i.mark{background:var(--accent)}
 .logo i svg{display:block}
 .wm-text{display:flex;flex-direction:column;line-height:1.05}
 .wm-text b{font-family:var(--f-display);font-weight:900;font-size:18px;letter-spacing:.13em}
 .wm-text em{font-style:normal;font-family:var(--f-data);font-size:9.5px;
             letter-spacing:.26em;color:var(--muted);margin-top:3px}
 @media(max-width:420px){
-  .logo i{width:22px;height:22px;border-radius:6px;font-size:12px}
+  .logo i{width:22px;height:22px;font-size:12px}
   .wm-text b{font-size:16px}
 }
 
@@ -149,10 +158,11 @@ header{
 @media(max-width:760px){.topbar nav a:not(.btn-mini){display:none}}
 .btn-mini{
   font-family:var(--f-display);font-weight:800;font-size:14px;
-  background:var(--accent);color:var(--accent-ink);text-decoration:none;
-  padding:8px 16px;border-radius:var(--r);border-bottom:0!important;
+  background:var(--accent);color:#fff;text-decoration:none;
+  padding:8px 16px;border-radius:var(--r);
+  border:1px solid var(--accent-dark)!important;
 }
-.btn-mini:hover{filter:brightness(1.1)}
+.btn-mini:hover{background:var(--accent-dark)}
 
 /* ── ראש הדף ───────────────────────────────────────────────────────── */
 .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(28px,5vw,64px);
@@ -162,7 +172,7 @@ header{
 .eyebrow{display:flex;align-items:center;gap:11px;margin-bottom:22px}
 .eyebrow .dot{
   width:7px;height:7px;background:var(--accent);border-radius:50%;flex:none;
-  box-shadow:0 0 0 4px rgba(229,57,155,.18);
+  box-shadow:0 0 0 4px var(--accent-soft);
 }
 
 h1{font-size:clamp(34px,5.4vw,60px);font-weight:900;letter-spacing:-.02em}
@@ -179,11 +189,12 @@ h1 em{font-style:normal;color:var(--accent)}
   transition:transform .12s ease,background .15s ease,color .15s ease,border-color .15s ease;
 }
 .btn:active{transform:translateY(1px)}
-.btn-primary{background:var(--accent);color:var(--accent-ink);
-             box-shadow:0 6px 26px rgba(229,57,155,.26)}
-.btn-primary:hover{filter:brightness(1.1)}
+/* כפתור ראשי אחד לכל אזור — Accent מלא, מסגרת AccentDark, בדיוק כמו
+   MvtTheme.PrimaryButton בתוסף. המשני לבן עם מסגרת, כמו SecondaryButton. */
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent-dark)}
+.btn-primary:hover{background:var(--accent-dark)}
 .btn-ghost{border-color:var(--line);color:var(--text);background:var(--surface)}
-.btn-ghost:hover{border-color:var(--muted)}
+.btn-ghost:hover{border-color:var(--muted);background:var(--surface-2)}
 
 /* ── מסגרות מדיה ───────────────────────────────────────────────────── */
 .frame{
@@ -197,15 +208,16 @@ h1 em{font-style:normal;color:var(--accent)}
   gap:12px; align-items:center;
 }
 .viewport{position:relative}
-.viewport video{aspect-ratio:1080/1350;object-fit:cover;background:#000}
+.viewport video{aspect-ratio:1080/1350;object-fit:cover;background:var(--surface-2)}
 .playbtn{position:absolute;inset:0;display:grid;place-items:center;border:0;
          background:transparent;cursor:pointer;color:#fff}
 .playbtn span{
-  width:66px;height:66px;border-radius:50%;background:rgba(9,13,22,.6);
-  backdrop-filter:blur(3px);border:1.5px solid rgba(255,255,255,.7);
+  width:66px;height:66px;border-radius:50%;background:var(--accent);
+  border:1.5px solid var(--accent-dark);
+  box-shadow:0 4px 18px rgba(15,23,42,.24);
   display:grid;place-items:center;transition:transform .15s ease,background .15s ease;
 }
-.playbtn:hover span{transform:scale(1.07);background:var(--accent);border-color:var(--accent)}
+.playbtn:hover span{transform:scale(1.07);background:var(--accent-dark)}
 .playbtn svg{margin-inline-start:4px}
 .playbtn.hidden{display:none}
 
@@ -217,12 +229,12 @@ h1 em{font-style:normal;color:var(--accent)}
 
 /* ── חלון ההדגמה המלאה ─────────────────────────────────────────────── */
 dialog#demo-modal{
-  border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r);background:var(--surface);
   color:var(--text);padding:0;width:min(960px,94vw);max-height:90vh;
-  box-shadow:0 30px 80px rgba(0,0,0,.6);
+  box-shadow:0 24px 60px rgba(15,23,42,.24);
 }
-dialog#demo-modal::backdrop{background:rgba(4,7,12,.76);backdrop-filter:blur(3px)}
-.demo-body video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+dialog#demo-modal::backdrop{background:rgba(15,23,42,.42);backdrop-filter:blur(3px)}
+.demo-body video{display:block;width:100%;aspect-ratio:16/9;background:var(--surface-2)}
 
 /* ── רצועת נתונים ──────────────────────────────────────────────────── */
 .specs{
@@ -252,7 +264,9 @@ dialog#demo-modal::backdrop{background:rgba(4,7,12,.76);backdrop-filter:blur(3px
   font-family:var(--f-display);font-weight:900;
   font-size:clamp(26px,3.6vw,40px);line-height:1.25;white-space:nowrap;
 }
-.problem .shout s{text-decoration-color:var(--accent);text-decoration-thickness:3px}
+/* אדום = דחייה בפועל, המשמעות הסמנטית «חוסם» מחלון ה-QA. לא קישוט. */
+.problem .shout s{color:var(--block);text-decoration-color:var(--block);
+                  text-decoration-thickness:3px}
 .problem p{color:var(--muted);max-width:54ch}
 
 /* ── שלבי העבודה ───────────────────────────────────────────────────── */
@@ -265,19 +279,24 @@ dialog#demo-modal::backdrop{background:rgba(4,7,12,.76);backdrop-filter:blur(3px
   .step,.step:nth-child(even){grid-template-columns:1fr;direction:rtl;gap:20px}
 }
 .step-num{
-  display:inline-flex;align-items:center;gap:9px;margin-bottom:12px;
+  display:inline-flex;align-items:center;gap:11px;margin-bottom:14px;
   font-family:var(--f-data);font-size:12px;letter-spacing:.14em;color:var(--muted);
 }
-.step-num i{
-  width:22px;height:22px;border-radius:5px;flex:none;display:grid;
-  place-items:center;font-style:normal;font-weight:800;font-size:12px;
-  color:#07101f;font-family:var(--f-display);
+/* אייקון השלב: חפץ מהמציאות בקו 2px --ink, ואלמנט הפעולה היחיד ב-Accent
+   (DESIGN_LANGUAGE §3) — אותה טיפולוגיה כמו אייקוני הריבון בתוסף. */
+.step-ico{
+  width:38px;height:38px;flex:none;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+  display:grid;place-items:center;
 }
-.step:nth-child(1) .step-num i{background:var(--c-blue)}
-.step:nth-child(2) .step-num i{background:var(--c-violet)}
-.step:nth-child(3) .step-num i{background:var(--c-amber)}
-.step:nth-child(4) .step-num i{background:var(--c-green)}
-.step:nth-child(5) .step-num i{background:var(--c-teal)}
+.step-ico svg{display:block;color:var(--ink)}
+.step-ico .act{color:var(--accent)}
+.step-num b{
+  font-family:var(--f-display);font-weight:800;font-size:12px;
+  color:var(--accent);letter-spacing:.1em;
+}
+.step-num b::after{content:" · ";color:var(--muted);font-weight:400}
+.step-num b+span{margin-inline-start:-9px}
 .step h3{font-size:clamp(21px,2.5vw,27px);font-weight:800}
 .step p{color:var(--muted);margin-top:11px;max-width:46ch}
 
@@ -286,7 +305,7 @@ dialog#demo-modal::backdrop{background:rgba(4,7,12,.76);backdrop-filter:blur(3px
 @media(max-width:900px){.verify{grid-template-columns:1fr}}
 .checks{list-style:none;padding:0;margin:22px 0 0;display:flex;flex-direction:column;gap:12px}
 .checks li{display:flex;gap:11px;align-items:flex-start;font-size:16px}
-.checks svg{flex:none;margin-top:6px;color:var(--c-green)}
+.checks svg{flex:none;margin-top:6px;color:var(--ok)}
 
 /* ── גרסאות ────────────────────────────────────────────────────────── */
 .years{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
@@ -303,8 +322,8 @@ dialog#demo-modal::backdrop{background:rgba(4,7,12,.76);backdrop-filter:blur(3px
   align-items:flex-start;
 }
 .pilot .tagdot{
-  width:9px;height:9px;border-radius:50%;background:var(--c-amber);flex:none;
-  margin-top:9px;box-shadow:0 0 0 4px rgba(245,165,36,.16);
+  width:9px;height:9px;border-radius:50%;background:var(--warn);flex:none;
+  margin-top:9px;box-shadow:0 0 0 4px var(--warn-bg);
 }
 .pilot b{font-family:var(--f-display);font-weight:800}
 .pilot p{color:var(--muted);margin-top:4px;max-width:62ch}
@@ -318,18 +337,20 @@ dialog#demo-modal::backdrop{background:rgba(4,7,12,.76);backdrop-filter:blur(3px
 .contact::before{
   content:"";position:absolute;inset-block-start:-140px;inset-inline-end:-120px;
   width:420px;height:340px;pointer-events:none;
-  background:radial-gradient(50% 50% at 50% 50%,rgba(229,57,155,.16),transparent 70%);
+  background:radial-gradient(50% 50% at 50% 50%,rgba(29,78,216,.10),transparent 70%);
 }
 .contact>*{position:relative}
 @media(max-width:900px){.contact{grid-template-columns:1fr}}
 .contact h2{font-size:clamp(26px,3.4vw,38px);font-weight:900}
+/* ירוק וואטסאפ = סימן פלטפורמה של צד שלישי, לא צבע מהפלטה שלנו.
+   נשמר כדי שהכפתור יזוהה מיד; מכאן שהוא לא נושא צל או זוהר. */
 .wa{
   margin-top:26px;display:inline-flex;align-items:center;gap:11px;
   font-family:var(--f-display);font-weight:800;font-size:16px;
   text-decoration:none;padding:14px 24px;border-radius:var(--r);
-  background:#25d366;color:#07301a;
+  background:#25d366;color:#06381d;border:1px solid #1da851;
 }
-.wa:hover{filter:brightness(1.08)}
+.wa:hover{background:#1fbb5c}
 .or{margin-top:20px;color:var(--muted);font-size:14.5px}
 
 form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -340,26 +361,28 @@ form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .field label .req{color:var(--accent)}
 .field input,.field select,.field textarea{
   font-family:var(--f-body);font-size:16px;color:var(--text);
-  background:var(--ground);border:1px solid var(--line);border-radius:var(--r);
+  background:#fff;border:1px solid var(--line);border-radius:var(--r);
   padding:11px 13px;width:100%;
 }
-.field input::placeholder{color:#5b6884}
+.field input::placeholder{color:#94a3b8}
 .field textarea{resize:vertical;min-height:84px}
+/* פוקוס: Accent + הילת AccentSoft — אותה שפה כמו שדה ממוקד בתוסף */
 .field input:focus-visible,.field select:focus-visible,
 .field textarea:focus-visible,.btn:focus-visible,.wa:focus-visible,
 .wa-float:focus-visible,.playbtn:focus-visible,a:focus-visible,button:focus-visible{
   outline:2px solid var(--accent);outline-offset:2px;
+  box-shadow:0 0 0 4px var(--accent-soft);
 }
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chips input{position:absolute;opacity:0;width:0;height:0}
 .chips label{
   font-family:var(--f-data);font-size:13.5px;font-variant-numeric:tabular-nums;
   border:1px solid var(--line);border-radius:var(--r);padding:7px 12px;
-  cursor:pointer;user-select:none;background:var(--ground);color:var(--muted);
+  cursor:pointer;user-select:none;background:#fff;color:var(--muted);
 }
-.chips label:hover{color:var(--text);border-color:var(--muted)}
-.chips input:checked+label{background:var(--accent);color:var(--accent-ink);
-                           border-color:var(--accent)}
+.chips label:hover{color:var(--text);border-color:var(--muted);background:var(--surface-2)}
+.chips input:checked+label{background:var(--accent-soft);color:var(--accent-dark);
+                           border-color:var(--accent);font-weight:700}
 .chips input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
 .hp{position:absolute!important;left:-9999px;opacity:0;height:0;overflow:hidden}
 
@@ -369,31 +392,32 @@ form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     font-weight:400;line-height:1.6;color:var(--muted);cursor:pointer}
 .cb input{
   appearance:none;-webkit-appearance:none;flex:none;
-  width:19px;height:19px;margin-top:3px;border-radius:4px;cursor:pointer;
-  border:1px solid var(--line);background:var(--ground);
+  width:19px;height:19px;margin-top:3px;border-radius:var(--r);cursor:pointer;
+  border:1px solid var(--line);background:#fff;
   display:grid;place-items:center;transition:background .12s,border-color .12s;
 }
-.cb input:checked{background:var(--accent);border-color:var(--accent)}
+.cb input:checked{background:var(--accent);border-color:var(--accent-dark)}
 .cb input:checked::after{
   content:"";width:10px;height:6px;margin-top:-2px;
-  border:2px solid var(--accent-ink);border-top:0;border-inline-end:0;
+  border:2px solid #fff;border-top:0;border-inline-end:0;
   transform:rotate(-45deg);
 }
 .cb input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.cb input.invalid{border-color:var(--accent);box-shadow:0 0 0 3px rgba(229,57,155,.18)}
+/* שדה חובה שלא סומן = מסגרת אדומה + הודעה, לא MessageBox (כלל UX §7) */
+.cb input.invalid{border-color:var(--block);box-shadow:0 0 0 3px var(--block-bg)}
 .linkbtn{
   font:inherit;color:var(--accent);background:none;border:0;padding:0;
   cursor:pointer;text-decoration:underline;text-underline-offset:3px;
 }
-.linkbtn:hover{color:var(--text)}
+.linkbtn:hover{color:var(--accent-dark)}
 
 /* ── חלון הצהרת הפרטיות ────────────────────────────────────────────── */
 dialog#privacy-modal{
-  border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r);background:var(--surface);
   color:var(--text);padding:0;width:min(720px,92vw);max-height:86vh;
-  box-shadow:0 30px 80px rgba(0,0,0,.6);
+  box-shadow:0 24px 60px rgba(15,23,42,.24);
 }
-dialog#privacy-modal::backdrop{background:rgba(4,7,12,.76);backdrop-filter:blur(3px)}
+dialog#privacy-modal::backdrop{background:rgba(15,23,42,.42);backdrop-filter:blur(3px)}
 .pm-head{
   position:sticky;top:0;background:var(--surface);z-index:1;
   border-bottom:1px solid var(--line);padding:20px 26px;
@@ -426,11 +450,12 @@ dialog#privacy-modal::backdrop{background:rgba(4,7,12,.76);backdrop-filter:blur(
 }
 .submit-row{grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .form-note{font-size:13.5px;color:var(--muted)}
+/* הודעות הטופס בצבעים הסמנטיים של חלון ה-QA: ✔ תקין · ⛔ חוסם */
 .form-msg{grid-column:1/-1;font-size:15px;padding:12px 14px;border-radius:var(--r);display:none}
-.form-msg.ok{display:block;background:rgba(43,197,94,.12);
-             border:1px solid var(--c-green);color:var(--c-green)}
-.form-msg.err{display:block;background:rgba(229,57,155,.12);
-              border:1px solid var(--accent);color:var(--accent)}
+.form-msg.ok{display:block;background:var(--ok-bg);
+             border:1px solid var(--ok);color:var(--ok)}
+.form-msg.err{display:block;background:var(--block-bg);
+              border:1px solid var(--block);color:var(--block)}
 
 /* ── בלוק כותרת ────────────────────────────────────────────────────── */
 footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
@@ -459,13 +484,13 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
 .wa-float{
   position:fixed; inset-block-end:22px; inset-inline-start:22px; z-index:60;
   display:inline-flex; align-items:center; gap:10px;
-  background:#25d366; color:#07301a; text-decoration:none;
+  background:#25d366; color:#06381d; text-decoration:none;
   font-family:var(--f-display); font-weight:800; font-size:15px;
-  padding:13px 18px; border-radius:999px;
-  box-shadow:0 8px 26px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08) inset;
+  padding:13px 18px; border-radius:999px; border:1px solid #1da851;
+  box-shadow:0 6px 20px rgba(15,23,42,.18);
   transition:transform .15s ease, box-shadow .15s ease;
 }
-.wa-float:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.6)}
+.wa-float:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(15,23,42,.24)}
 .wa-float svg{flex:none}
 @media(max-width:620px){
   .wa-float{padding:15px;border-radius:50%}
@@ -476,7 +501,7 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
 .cookie-banner{
   position:fixed;inset-inline:0;inset-block-end:0;z-index:70;
   background:var(--surface);border-top:1px solid var(--line);
-  box-shadow:0 -10px 30px rgba(0,0,0,.4);
+  box-shadow:0 -8px 24px rgba(15,23,42,.10);
   padding:16px var(--gutter);
   display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between;
 }
@@ -498,11 +523,11 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
   <div class="topbar">
     <a class="wordmark" href="#top" aria-label="MVT AREA מאת MAXIOM, חזרה לראש הדף">
       <span class="logo" aria-hidden="true">
-        <i style="--c:var(--c-blue)">M</i>
-        <i style="--c:var(--c-violet)">V</i>
-        <i style="--c:var(--c-amber)">T</i>
-        <i style="--c:var(--c-green)">+</i>
-        <i style="--c:var(--c-teal)">
+        <i>M</i>
+        <i>V</i>
+        <i>T</i>
+        <i>+</i>
+        <i class="mark">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"
                stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
                stroke-linejoin="round"><path d="M2.5 8.5l3.6 3.6L13.5 4"/></svg>
@@ -588,7 +613,19 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
 
     <article class="step">
       <div>
-        <div class="step-num"><i>1</i>שרטוט</div>
+        <div class="step-num">
+          <span class="step-ico" aria-hidden="true">
+            <!-- תכנית דירה עם פתח דלת; כנף הדלת והקשת הן אלמנט הפעולה -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+              <path d="M3 4h18v16H3z"/><path d="M12 4v8"/><path d="M12 18v2"/>
+              <path class="act" stroke="currentColor" d="M12 12h6"/>
+              <path class="act" stroke="currentColor" d="M18 12a6 6 0 0 1-6 6"/>
+            </svg>
+          </span>
+          <b class="ltr">01</b><span>שרטוט</span>
+        </div>
         <h3>מסמנים שטח, והקוד נכנס באותה תנועה</h3>
         <p>
           משרטטים גבול והתוסף פותח מיד את בוחר קוד השימוש. בוחרים שטח בלחיצה
@@ -605,7 +642,19 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
 
     <article class="step">
       <div>
-        <div class="step-num"><i>2</i>קודים</div>
+        <div class="step-num">
+          <span class="step-ico" aria-hidden="true">
+            <!-- תכנית עם תג קוד שימוש; התג הוא אלמנט הפעולה -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+              <path d="M3 4h10v16H3z"/><path d="M6 16h5"/>
+              <path class="act" stroke="currentColor"
+                    d="M15 8h5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-5l-3-3z"/>
+            </svg>
+          </span>
+          <b class="ltr">02</b><span>קודים</span>
+        </div>
         <h3>רשימות קודים לפי רשות, וגם רשימה משלכם</h3>
         <p>
           כלל ארצי, ירושלים ותל אביב מגיעים מוכנים ומתעדכנים מהשרת. אפשר ליצור
@@ -622,7 +671,18 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
 
     <article class="step">
       <div>
-        <div class="step-num"><i>3</i>קומות</div>
+        <div class="step-num">
+          <span class="step-ico" aria-hidden="true">
+            <!-- חתך בניין עם קומות חוזרות; הסוגר שמסמן את הטיפוסית הוא הפעולה -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+              <path d="M3 3h15v18H3z"/><path d="M3 9h15"/><path d="M3 15h15"/>
+              <path class="act" stroke="currentColor" d="M20 9h1v6h-1"/>
+            </svg>
+          </span>
+          <b class="ltr">03</b><span>קומות</span>
+        </div>
         <h3>קומה טיפוסית שנספרת נכון</h3>
         <p>
           מקבצים מפלסים לקומה טיפוסית אחת, והתוסף מכפיל אותה בחישוב ומציג את
@@ -640,7 +700,18 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
 
     <article class="step">
       <div>
-        <div class="step-num"><i>4</i>גיליון</div>
+        <div class="step-num">
+          <span class="step-ico" aria-hidden="true">
+            <!-- גרמושקה עם משבצת כותרת; משבצת הכותרת היא אלמנט הפעולה -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+              <path d="M3 4h18v16H3z"/><path d="M6 8h7"/><path d="M6 12h5"/>
+              <path class="act" stroke="currentColor" d="M15 14h6v6h-6z"/>
+            </svg>
+          </span>
+          <b class="ltr">04</b><span>גיליון</span>
+        </div>
         <h3>גיליון בגודל ההדפסה האמיתי</h3>
         <p>
           בונים את הגיליון והמערכת מוודאה שאינו חורג מהגודל הנדרש ברישוי זמין
@@ -656,7 +727,19 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
 
     <article class="step">
       <div>
-        <div class="step-num"><i>5</i>ייצוא</div>
+        <div class="step-num">
+          <span class="step-ico" aria-hidden="true">
+            <!-- «ייצוא לרובוט» = דף עם חץ יוצא (תיקון אוראל — לא ראש רובוט) -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+              <path d="M4 3h7l4 4v14H4z"/><path d="M11 3v4h4"/>
+              <path class="act" stroke="currentColor" d="M9 14h11"/>
+              <path class="act" stroke="currentColor" d="M17 11l3 3-3 3"/>
+            </svg>
+          </span>
+          <b class="ltr">05</b><span>ייצוא</span>
+        </div>
         <h3>אפליקציה אחת, תאימות מלאה</h3>
         <p>
           המערכת שלנו מפיקה את כל הקבצים הדרושים לרישוי זמין ולרובוט חישוב
@@ -732,7 +815,7 @@ footer{border-top:1px solid var(--line);margin-top:clamp(56px,8vw,100px);
         </svg>
         שיחה בוואטסאפ, 050-7203778
       </a>
-      <p class="or">או שתשאירו פרטים ונחזור אליכם ביום העסקים הקרוב.</p>
+      <p class="or">או שתשאירו פרטם ואנחנו נחזור אליכם</p>
     </div>
 
     <form id="lead-form" novalidate>
